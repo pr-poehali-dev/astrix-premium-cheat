@@ -5,24 +5,90 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Icon from "@/components/ui/icon";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
+
+const API_URL = "https://functions.poehali.dev/7baa9197-2925-4334-bf93-0597fa7b0769";
 
 export default function Index() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showPurchaseHistory, setShowPurchaseHistory] = useState(false);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const [userData, setUserData] = useState<any>(null);
+  const [purchaseHistory, setPurchaseHistory] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
-  const userData = {
-    username: "Player_2024",
-    email: "user@example.com",
-    uid: "AST-" + Math.random().toString(36).substr(2, 9).toUpperCase(),
-    password: "********"
+  useEffect(() => {
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      loadUserData(userId);
+    }
+  }, []);
+
+  const loadUserData = async (userId: string) => {
+    try {
+      const response = await fetch(`${API_URL}?userId=${userId}`);
+      const data = await response.json();
+      if (response.ok) {
+        setUserData(data.user);
+        setPurchaseHistory(data.purchases || []);
+        setIsAuthenticated(true);
+      } else {
+        localStorage.removeItem('userId');
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    }
   };
 
-  const purchaseHistory = [
-    { date: "2024-11-01", plan: "Месяц", price: "250₽", status: "Активна" },
-    { date: "2024-10-01", plan: "Неделя", price: "150₽", status: "Истекла" },
-  ];
+  const handleRegister = async (username: string, email: string, password: string) => {
+    setLoading(true);
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'register', username, email, password })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        localStorage.setItem('userId', data.user.id.toString());
+        await loadUserData(data.user.id.toString());
+        setAuthDialogOpen(false);
+        toast({ title: "Успешно!", description: "Регистрация завершена" });
+      } else {
+        toast({ title: "Ошибка", description: data.error, variant: "destructive" });
+      }
+    } catch (error) {
+      toast({ title: "Ошибка", description: "Не удалось зарегистрироваться", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogin = async (email: string, password: string) => {
+    setLoading(true);
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'login', email, password })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        localStorage.setItem('userId', data.user.id.toString());
+        await loadUserData(data.user.id.toString());
+        setAuthDialogOpen(false);
+        toast({ title: "Успешно!", description: "Вы вошли в аккаунт" });
+      } else {
+        toast({ title: "Ошибка", description: data.error, variant: "destructive" });
+      }
+    } catch (error) {
+      toast({ title: "Ошибка", description: "Не удалось войти", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-hidden">
@@ -69,48 +135,60 @@ export default function Index() {
                     <TabsTrigger value="register">Регистрация</TabsTrigger>
                   </TabsList>
                   <TabsContent value="login" className="space-y-4 mt-4">
-                    <div className="space-y-2">
-                      <label htmlFor="login-email" className="text-sm font-medium">Email</label>
-                      <Input id="login-email" type="email" placeholder="your@email.com" className="bg-background/50" />
-                    </div>
-                    <div className="space-y-2">
-                      <label htmlFor="login-password" className="text-sm font-medium">Пароль</label>
-                      <Input id="login-password" type="password" placeholder="••••••••" className="bg-background/50" />
-                    </div>
-                    <Button 
-                      className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
-                      onClick={() => {
-                        setIsAuthenticated(true);
-                        setAuthDialogOpen(false);
-                      }}
-                    >
-                      <Icon name="LogIn" className="mr-2" size={18} />
-                      Войти в аккаунт
-                    </Button>
+                    <form onSubmit={(e) => {
+                      e.preventDefault();
+                      const formData = new FormData(e.currentTarget);
+                      handleLogin(formData.get('email') as string, formData.get('password') as string);
+                    }}>
+                      <div className="space-y-2">
+                        <label htmlFor="login-email" className="text-sm font-medium">Email</label>
+                        <Input name="email" id="login-email" type="email" placeholder="your@email.com" className="bg-background/50" required />
+                      </div>
+                      <div className="space-y-2">
+                        <label htmlFor="login-password" className="text-sm font-medium">Пароль</label>
+                        <Input name="password" id="login-password" type="password" placeholder="••••••••" className="bg-background/50" required />
+                      </div>
+                      <Button 
+                        type="submit"
+                        className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90 mt-4"
+                        disabled={loading}
+                      >
+                        <Icon name="LogIn" className="mr-2" size={18} />
+                        {loading ? 'Загрузка...' : 'Войти в аккаунт'}
+                      </Button>
+                    </form>
                   </TabsContent>
                   <TabsContent value="register" className="space-y-4 mt-4">
-                    <div className="space-y-2">
-                      <label htmlFor="reg-username" className="text-sm font-medium">Имя пользователя</label>
-                      <Input id="reg-username" placeholder="Username" className="bg-background/50" />
-                    </div>
-                    <div className="space-y-2">
-                      <label htmlFor="reg-email" className="text-sm font-medium">Email</label>
-                      <Input id="reg-email" type="email" placeholder="your@email.com" className="bg-background/50" />
-                    </div>
-                    <div className="space-y-2">
-                      <label htmlFor="reg-password" className="text-sm font-medium">Пароль</label>
-                      <Input id="reg-password" type="password" placeholder="••••••••" className="bg-background/50" />
-                    </div>
-                    <Button 
-                      className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
-                      onClick={() => {
-                        setIsAuthenticated(true);
-                        setAuthDialogOpen(false);
-                      }}
-                    >
-                      <Icon name="UserPlus" className="mr-2" size={18} />
-                      Зарегистрироваться
-                    </Button>
+                    <form onSubmit={(e) => {
+                      e.preventDefault();
+                      const formData = new FormData(e.currentTarget);
+                      handleRegister(
+                        formData.get('username') as string,
+                        formData.get('email') as string,
+                        formData.get('password') as string
+                      );
+                    }}>
+                      <div className="space-y-2">
+                        <label htmlFor="reg-username" className="text-sm font-medium">Имя пользователя</label>
+                        <Input name="username" id="reg-username" placeholder="Username" className="bg-background/50" required />
+                      </div>
+                      <div className="space-y-2">
+                        <label htmlFor="reg-email" className="text-sm font-medium">Email</label>
+                        <Input name="email" id="reg-email" type="email" placeholder="your@email.com" className="bg-background/50" required />
+                      </div>
+                      <div className="space-y-2">
+                        <label htmlFor="reg-password" className="text-sm font-medium">Пароль</label>
+                        <Input name="password" id="reg-password" type="password" placeholder="••••••••" className="bg-background/50" required />
+                      </div>
+                      <Button 
+                        type="submit"
+                        className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90 mt-4"
+                        disabled={loading}
+                      >
+                        <Icon name="UserPlus" className="mr-2" size={18} />
+                        {loading ? 'Загрузка...' : 'Зарегистрироваться'}
+                      </Button>
+                    </form>
                   </TabsContent>
                 </Tabs>
               </DialogContent>
@@ -159,14 +237,14 @@ export default function Index() {
                     <Icon name="User" size={20} className="text-primary" />
                     <div>
                       <p className="text-sm text-muted-foreground">Username</p>
-                      <p className="font-semibold">{userData.username}</p>
+                      <p className="font-semibold">{userData?.username}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 p-4 bg-background/50 rounded-lg border border-border/30">
                     <Icon name="Mail" size={20} className="text-primary" />
                     <div>
                       <p className="text-sm text-muted-foreground">Email</p>
-                      <p className="font-semibold">{userData.email}</p>
+                      <p className="font-semibold">{userData?.email}</p>
                     </div>
                   </div>
                 </div>
@@ -174,15 +252,15 @@ export default function Index() {
                   <div className="flex items-center gap-3 p-4 bg-background/50 rounded-lg border border-border/30">
                     <Icon name="KeyRound" size={20} className="text-primary" />
                     <div>
-                      <p className="text-sm text-muted-foreground">UID</p>
-                      <p className="font-semibold font-mono">{userData.uid}</p>
+                      <p className="text-sm text-muted-foreground">UID (ID аккаунта)</p>
+                      <p className="font-semibold font-mono">#{userData?.id}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 p-4 bg-background/50 rounded-lg border border-border/30">
-                    <Icon name="Lock" size={20} className="text-primary" />
+                    <Icon name="Calendar" size={20} className="text-primary" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Пароль</p>
-                      <p className="font-semibold">{userData.password}</p>
+                      <p className="text-sm text-muted-foreground">Дата регистрации</p>
+                      <p className="font-semibold">{userData?.createdAt ? new Date(userData.createdAt).toLocaleDateString('ru-RU') : ''}</p>
                     </div>
                   </div>
                 </div>
