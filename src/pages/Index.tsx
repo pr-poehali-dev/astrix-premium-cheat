@@ -7,10 +7,11 @@ import Icon from "@/components/ui/icon";
 export default function Index() {
   return (
     <div className="min-h-screen bg-background text-foreground overflow-hidden">
-      <div className="fixed inset-0 -z-10">
-        <div className="absolute top-20 left-20 w-96 h-96 bg-primary/30 rounded-full blur-[120px] animate-pulse"></div>
-        <div className="absolute bottom-20 right-20 w-[500px] h-[500px] bg-secondary/30 rounded-full blur-[150px] animate-pulse" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent/20 rounded-full blur-[180px] animate-pulse" style={{ animationDelay: '2s' }}></div>
+      <div className="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-900/20 via-background to-background">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+        <div className="absolute top-0 left-1/4 w-[800px] h-[800px] bg-primary/20 rounded-full blur-[200px] animate-pulse"></div>
+        <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-primary/15 rounded-full blur-[180px] animate-pulse" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute top-1/3 right-1/3 w-[400px] h-[400px] bg-red-500/10 rounded-full blur-[150px] animate-pulse" style={{ animationDelay: '3s' }}></div>
       </div>
 
       <nav className="fixed top-0 w-full z-50 backdrop-blur-xl bg-background/50 border-b border-border/50">
@@ -26,9 +27,15 @@ export default function Index() {
             <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">Цены</a>
             <a href="#contact" className="text-muted-foreground hover:text-foreground transition-colors">Контакты</a>
           </div>
-          <Button className="bg-gradient-to-r from-primary to-secondary hover:opacity-90">
-            Купить
-          </Button>
+          <div className="flex gap-3">
+            <Button variant="outline" className="border-primary/50 hover:bg-primary/10">
+              <Icon name="LogIn" className="mr-2" size={18} />
+              Авторизация
+            </Button>
+            <Button className="bg-gradient-to-r from-primary to-secondary hover:opacity-90">
+              Купить
+            </Button>
+          </div>
         </div>
       </nav>
 
