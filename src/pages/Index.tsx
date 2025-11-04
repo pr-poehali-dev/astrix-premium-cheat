@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Icon from "@/components/ui/icon";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
 const API_URL = "https://functions.poehali.dev/7baa9197-2925-4334-bf93-0597fa7b0769";
@@ -17,6 +18,7 @@ export default function Index() {
   const [userData, setUserData] = useState<any>(null);
   const [purchaseHistory, setPurchaseHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -111,18 +113,36 @@ export default function Index() {
           </div>
           <div className="hidden md:flex gap-8">
             {isAuthenticated && (
-              <a href="#dashboard" className="text-muted-foreground hover:text-foreground transition-colors">Личный кабинет</a>
+              <button onClick={() => navigate('/profile')} className="text-muted-foreground hover:text-foreground transition-colors">Личный кабинет</button>
             )}
             <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Функционал</a>
             <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">Цены</a>
             <a href="#contact" className="text-muted-foreground hover:text-foreground transition-colors">Контакты</a>
           </div>
           <div className="flex gap-3">
-            <Dialog open={authDialogOpen} onOpenChange={setAuthDialogOpen}>
+            <Button 
+              variant="outline" 
+              className="border-primary/50 hover:bg-primary/10"
+              onClick={() => navigate('/register')}
+            >
+              <Icon name="LogIn" className="mr-2" size={18} />
+              Авторизация
+            </Button>
+            {isAuthenticated ? (
+              <Button 
+                variant="outline" 
+                className="border-primary/50 hover:bg-primary/10"
+                onClick={() => navigate('/profile')}
+              >
+                <Icon name="User" className="mr-2" size={18} />
+                Профиль
+              </Button>
+            ) : null}
+            {false && <Dialog open={authDialogOpen} onOpenChange={setAuthDialogOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" className="border-primary/50 hover:bg-primary/10">
                   <Icon name="LogIn" className="mr-2" size={18} />
-                  Авторизация
+                  Авторизация (старое)
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-md bg-card/95 backdrop-blur-xl border-border/50">
@@ -192,7 +212,7 @@ export default function Index() {
                   </TabsContent>
                 </Tabs>
               </DialogContent>
-            </Dialog>
+            </Dialog>}
             <Button className="bg-gradient-to-r from-primary to-secondary hover:opacity-90">
               Купить
             </Button>
@@ -224,7 +244,7 @@ export default function Index() {
         </div>
       </section>
 
-      {isAuthenticated && (
+      {false && isAuthenticated && (
         <section id="dashboard" className="py-20 px-6 bg-muted/10">
           <div className="container mx-auto max-w-4xl">
             <h2 className="text-4xl md:text-5xl font-bold text-center mb-12">
